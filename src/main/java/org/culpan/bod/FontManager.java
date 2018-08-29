@@ -10,6 +10,8 @@ import java.util.Map;
 public class FontManager {
     public static final String IMMORTAL_32 = "Immortal-32";
 
+    public static final String IMMORTAL_20 = "Immortal-20";
+
     static Map<String, BitmapFont> fonts = new HashMap<String, BitmapFont>();
 
     private static String buildKey(String name, int size) {

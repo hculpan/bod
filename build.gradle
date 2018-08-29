@@ -1,6 +1,16 @@
-plugins {
-    id 'java'
+import org.apache.tools.ant.taskdefs.condition.Os
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+    }
 }
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
 
 group 'org.culpan'
 version '1.0-SNAPSHOT'
@@ -8,9 +18,9 @@ version '1.0-SNAPSHOT'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-repositories {
-    mavenCentral()
-}
+def mainClassName = 'org.culpan.bod.desktop.DesktopLauncher'
+def embeddedJRE = true
+def libsDir = 'build/libs'
 
 ext {
     appName = "Bunch O' Dungeons"
@@ -19,6 +29,17 @@ ext {
     box2DLightsVersion = '1.4'
     ashleyVersion = '1.7.0'
     aiVersion = '1.8.0'
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
 }
 
 dependencies {
@@ -30,4 +51,37 @@ dependencies {
     compile "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
     compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task javapackager(type: Exec, dependsOn: [assemble]) {
+    def nativeType = ''
+    def iconFile = ''
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        nativeType = 'msi'
+        iconFile = 'win-icon.ico'
+    } else if (System.properties['os.name'].toLowerCase().contains('mac')) {
+        nativeType = 'dmg'
+        iconFile = 'mac-icon.icns'
+    } else  if (System.properties['os.name'].toLowerCase().contains('linux')) {
+        nativeType = 'rpm'
+    }
+
+    def dependencies = 'bod-1.0-SNAPSHOT-all.jar'
+
+    def paramEmbeddedJRE = embeddedJRE ? [] : ['-Bruntime=']
+
+    workingDir project.projectDir
+    commandLine = [
+            'javapackager',
+            '-deploy',
+            '-Bicon=' + iconFile,
+            '-nosign',
+            '-native', nativeType,
+            '-outdir', 'build/distribution',
+            '-outfile', project.name,
+            '-name', 'Bunch O\' Dungeons!',
+            '-appclass', mainClassName,
+            '-srcdir', libsDir,
+            '-srcfiles', dependencies
+    ] + paramEmbeddedJRE
 }
