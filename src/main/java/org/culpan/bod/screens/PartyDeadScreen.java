@@ -2,6 +2,7 @@ package org.culpan.bod.screens;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -13,13 +14,13 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import org.culpan.bod.BodGame;
 
-public class TitleScreen implements Screen {
+public class PartyDeadScreen implements Screen {
     private Stage stage;
     private Game game;
 
-    public TitleScreen(Game aGame) {
-        game = aGame;
-        stage = new Stage(new ScreenViewport());
+    public PartyDeadScreen(Game aGame) {
+        this.game = aGame;
+        this.stage = new Stage(new ScreenViewport());
 
         Label title = new Label("Bunch O' Dungeons!", BodGame.skin,"title");
         title.setAlignment(Align.center);
@@ -27,9 +28,30 @@ public class TitleScreen implements Screen {
         title.setWidth(Gdx.graphics.getWidth());
         stage.addActor(title);
 
-        TextButton playButton = new TextButton("Start!",BodGame.skin);
-        playButton.setWidth(Gdx.graphics.getWidth()/2);
-        playButton.setPosition(Gdx.graphics.getWidth()/2-playButton.getWidth()/2,Gdx.graphics.getHeight()/2-playButton.getHeight()/2);
+        Label subtitle = new Label("Your character has died!", BodGame.skin,"subtitle");
+        subtitle.setAlignment(Align.center);
+        subtitle.setY(Gdx.graphics.getHeight()*2/3 - 100);
+        subtitle.setWidth(Gdx.graphics.getWidth());
+        stage.addActor(subtitle);
+
+        TextButton quitButton = new TextButton("Quit",BodGame.skin);
+        quitButton.setWidth(Gdx.graphics.getWidth()/3);
+        quitButton.setPosition(Gdx.graphics.getWidth() * 0.25f - quitButton.getWidth()/2,Gdx.graphics.getHeight()/3-quitButton.getHeight()/2);
+        quitButton.addListener(new InputListener(){
+            @Override
+            public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+                Gdx.app.exit();
+            }
+            @Override
+            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+        });
+        stage.addActor(quitButton);
+
+        TextButton playButton = new TextButton("New Character",BodGame.skin);
+        playButton.setWidth(Gdx.graphics.getWidth()/3);
+        playButton.setPosition(Gdx.graphics.getWidth() * .75f - playButton.getWidth()/2,Gdx.graphics.getHeight()/3 - playButton.getHeight()/2);
         playButton.addListener(new InputListener(){
             @Override
             public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
@@ -41,7 +63,6 @@ public class TitleScreen implements Screen {
             }
         });
         stage.addActor(playButton);
-
 
     }
 

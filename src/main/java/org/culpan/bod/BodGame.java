@@ -2,13 +2,18 @@ package org.culpan.bod;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import org.culpan.bod.screens.BodGameScreen;
+import org.culpan.bod.screens.TitleScreen;
 
 public class BodGame extends Game {
-	public static Skin skin;
+	public final static Color SCREEN_BACKGROUND = Color.BROWN;
+
+
+    public static Skin skin;
 
 	SpriteBatch batch;
 	Texture img;
@@ -18,8 +23,8 @@ public class BodGame extends Game {
         skin = new Skin(Gdx.files.internal("skins/pixthulhu/skin/pixthulhu-ui.json"));
 
 //TODO Change to TitleScreen
-        //        this.setScreen(new TitleScreen(this));
-		this.setScreen(new BodGameScreen(this));
+        this.setScreen(new TitleScreen(this));
+//		this.setScreen(new BodGameScreen(this));
 	}
 
 	@Override

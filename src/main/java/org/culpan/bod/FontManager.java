@@ -12,6 +12,8 @@ public class FontManager {
 
     public static final String IMMORTAL_20 = "Immortal-20";
 
+    public static final String IMMORTAL_14 = "Immortal-14";
+
     static Map<String, BitmapFont> fonts = new HashMap<String, BitmapFont>();
 
     private static String buildKey(String name, int size) {
@@ -43,7 +45,7 @@ public class FontManager {
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal(filename));
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.size = size;
-        bitmapFont = generator.generateFont(parameter); // font size 12
+        bitmapFont = generator.generateFont(parameter);
         generator.dispose();
         addFont(keyName, bitmapFont);
         return bitmapFont;

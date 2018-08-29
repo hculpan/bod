@@ -16,6 +16,10 @@ import org.culpan.bod.FontManager;
 import org.culpan.bod.Utils;
 import org.culpan.bod.model.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class BodGameScreen implements Screen, InputProcessor, GameState {
     Game game;
 
@@ -35,7 +39,11 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
 
     BitmapFont bitmapFont;
 
-    public BodGameScreen(Game game) {
+    public BodGameScreen(Game game, String mapName, List<Combatant> players) {
+        init(game, mapName, players);
+    }
+
+    private void init(Game game, String mapName, List<Combatant> players) {
         this.game = game;
 
         loadFonts();
@@ -53,19 +61,41 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
         camera.position.set(70, 360, 0);
         camera.update();
 
-        tiledMap = new TmxMapLoader().load("maps/first-room.tmx");
+        tiledMap = new TmxMapLoader().load(mapName);
 
         Object startx = tiledMap.getProperties().get("entry-x");
         Object starty = tiledMap.getProperties().get("entry-y");
         int charX = Integer.parseInt(startx.toString());
         int charY = Integer.parseInt(starty.toString());
 
-        gameMaster = new GameMaster();
-        gameMaster.addCombatants(new Player(charX, charY, this, "Ardelson Bitemunch"));
-        gameMaster.addCombatants(new Npc(11, 20, this, "Goblin Jason"));
+        gameMaster = new GameMaster(this);
+        players.forEach(p -> {
+            p.setX(charX);
+            p.setY(charY);
+            gameMaster.addCombatants(p);
+        });
+        loadNpcs();
 
         tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, 1.5f);
         Gdx.input.setInputProcessor(this);
+    }
+
+    public BodGameScreen(Game game) {
+        Player p = new Player( this, "Ardelson Bitemunch");
+        p.setLevel(1);
+        p.addAttack("Long sword", 60, 8, 1);
+        p.addAttack("Dagger", 40, 4, 0);
+        List<Combatant> players = new ArrayList<>();
+        players.add(p);
+
+        init(game, "maps/first-room.tmx", players);
+    }
+
+    private void loadNpcs() {
+        Npc npc = new Npc(11, 20, this, 1,"Goblin Jason");
+        npc.addAttack("Short sword", 50, 6, 0);
+        npc.setAc(1);
+        gameMaster.addCombatants(npc);
     }
 
     private void loadFonts() {
@@ -74,6 +104,8 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
         bitmapFont = FontManager.addFontFromFile("fonts/immortal.ttf", 32, FontManager.IMMORTAL_32);
         bitmapFont.setColor(Color.WHITE);
         bitmapFont = FontManager.addFontFromFile("fonts/immortal.ttf", 20, FontManager.IMMORTAL_20);
+        bitmapFont.setColor(Color.WHITE);
+        bitmapFont = FontManager.addFontFromFile("fonts/immortal.ttf", 14, FontManager.IMMORTAL_14);
         bitmapFont.setColor(Color.WHITE);
     }
 
@@ -108,6 +140,22 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
     }
 
     @Override
+    public boolean exitAt(int x, int y) {
+        boolean result = false;
+
+        TiledMapTileLayer layer = (TiledMapTileLayer)tiledMap.getLayers().get("Exits");
+        TiledMapTileLayer.Cell cell = layer.getCell(x, y);
+        if (cell != null) {
+            Object prop = cell.getTile().getProperties().get("door");
+            if (prop != null && prop instanceof Boolean) {
+                result = ((Boolean)prop).booleanValue();
+            }
+        }
+
+        return result;
+    }
+
+    @Override
     public boolean canMoveTo(int x, int y) {
         boolean result = false;
 
@@ -127,6 +175,11 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
         }
 
         return result;
+    }
+
+    @Override
+    public void addMessage(String message) {
+        gameMaster.addMessage(message);
     }
 
     @Override
@@ -184,19 +237,46 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
         FontManager.dispose();
     }
 
+    private void handleGmAction() {
+        gameMaster.act();
+        if (gameMaster.allPlayersDead()) {
+            game.setScreen(new PartyDeadScreen(game));
+        }
+    }
+
+    @Override
+    public Combatant getCombatantAt(int x, int y) {
+        List<Combatant> combatants = gameMaster.getCombatants().stream().filter(c -> c.getX() == x && c.getY() == y).collect(Collectors.toList());
+        if (combatants.size() == 1) {
+            return combatants.get(0);
+        } else {
+            return null;
+        }
+    }
+
     @Override
     public boolean keyDown(int keycode) {
         Combatant c = gameMaster.getActivePlayer();
         if (keycode == Input.Keys.UP && gameMaster.canAct() && c.moveTo(c.getX(), c.getY() + 2)) {
-            gameMaster.act();
+            handleGmAction();
         } else if (keycode == Input.Keys.DOWN && gameMaster.canAct() && c.moveTo(c.getX(), c.getY() - 2)) {
-            gameMaster.act();
+            handleGmAction();
         } else if (keycode == Input.Keys.LEFT && gameMaster.canAct() && c.moveTo(c.getX() - 2, c.getY())) {
-            gameMaster.act();
+            handleGmAction();
         } else if (keycode == Input.Keys.RIGHT && gameMaster.canAct() && c.moveTo(c.getX() + 2, c.getY())) {
-            gameMaster.act();
+            handleGmAction();
+        } else if (keycode == Input.Keys.P && gameMaster.canAct()) {
+            handleGmAction();
+        } else if (keycode == Input.Keys.ESCAPE) {
+            game.setScreen(new PauseGameScreen(game, this));
+        } else if (keycode == Input.Keys.E && exitAt(c.getX(), c.getY())) {
+            exitRoom();
         }
         return false;
+    }
+
+    private void exitRoom() {
+        game.setScreen(new BodGameScreen(game, "maps/corridor1.tmx", gameMaster.getPlayers()));
     }
 
     @Override

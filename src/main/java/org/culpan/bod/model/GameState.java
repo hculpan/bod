@@ -8,4 +8,10 @@ public interface GameState {
     boolean isPlayerAt(int x, int y);
 
     Combatant getNearestPlayerTo(int x, int y);
+
+    void addMessage(String message);
+
+    Combatant getCombatantAt(int x, int y);
+
+    boolean exitAt(int x, int y);
 }
