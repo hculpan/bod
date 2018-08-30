@@ -141,13 +141,30 @@ public class Player extends Combatant {
         FontManager.getFont(FontManager.IMMORTAL_20).draw(batch, String.format("HP: %d / %d", hp, maxHp), 40, Gdx.graphics.getHeight() - 72);
         font.draw(batch, Integer.toString(ac),  345, Gdx.graphics.getHeight() - 72);
 
+        int currentY = Gdx.graphics.getHeight() - 99;
         for (int i = 0; i < (attacks.size() > 3 ? 3 : attacks.size()); i++) {
             Attack attack = attacks.get(i);
-            font.draw(batch, attack.getWeaponName(), 150, Gdx.graphics.getHeight() - (99 + i * 22));
-            font.draw(batch, String.format("%d%%", attack.toHit), 290, Gdx.graphics.getHeight() - (99 + i * 22));
-            font.draw(batch, attack.getDamage(), 380, Gdx.graphics.getHeight() - (99 + i * 22));
-            if (i == 0) {
-                font.draw(batch, "(r)", 445, Gdx.graphics.getHeight() - (99 + i * 22));
+            font.draw(batch, attack.getWeaponName(), 150, currentY);
+            font.draw(batch, String.format("%d%%", attack.toHit), 290, currentY);
+            font.draw(batch, attack.getDamage(), 380, currentY);
+            if (attack == getActiveParry() && attack == getActiveAttack()) {
+                font.draw(batch, "(a+p)", 445, currentY);
+            } else if (attack == getActiveAttack()) {
+                font.draw(batch, "(a)", 445, currentY);
+            } else if (attack == getActiveParry()) {
+                font.draw(batch, "(p)", 445, currentY);
+            }
+            currentY = currentY - 22;
+        }
+
+        if (spells.size() > 0) {
+            font.draw(batch, "Spells:", 40, currentY);
+            font.draw(batch, String.format("Magic Points: %d", getMagicPoints()), 200, currentY);
+            currentY = currentY - 22;
+            for (int i = 0; i < spells.size(); i++) {
+                Spell spell = spells.get(i);
+                font.draw(batch, String.format("%s (%d mp, %d%%)", spell.getName(), spell.getMpCost(), spell.getSkillLevel()), 100, currentY);
+                currentY = currentY - 22;
             }
         }
     }

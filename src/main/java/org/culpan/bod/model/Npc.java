@@ -16,6 +16,12 @@ public class Npc extends Combatant {
 
     ShapeRenderer shapeRenderer = new ShapeRenderer();
 
+    public Npc(String name) {
+        this.name = name;
+        bitmapFontCache20 = new BitmapFontCache(FontManager.getFont(FontManager.IMMORTAL_20));
+        bitmapFontCache32 = new BitmapFontCache(FontManager.getFont(FontManager.IMMORTAL_32));
+    }
+
     public Npc(int x, int y, GameState gameState, int level, String name) {
         super(x, y, gameState);
         this.name = name;
@@ -23,15 +29,8 @@ public class Npc extends Combatant {
         this.maxHp = 10;
         this.level = level;
 
-        Texture characterTexture = new Texture(Gdx.files.internal("dungeon/0x72_16x16DungeonTileset.v4.png"));
-        sprite = new Sprite(characterTexture, 16, 160, 16, 16);
-        sprite.setScale(3);
         bitmapFontCache20 = new BitmapFontCache(FontManager.getFont(FontManager.IMMORTAL_20));
-//        bitmapFontCache20.addText("Level:", 40, Gdx.graphics.getHeight() - 45);
-//        bitmapFontCache20.addText("XP:", 200, Gdx.graphics.getHeight() - 45);
-
         bitmapFontCache32 = new BitmapFontCache(FontManager.getFont(FontManager.IMMORTAL_32));
-//        bitmapFontCache32.addText(name, 10, Gdx.graphics.getHeight() - 10);
     }
 
     @Override

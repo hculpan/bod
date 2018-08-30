@@ -39,12 +39,15 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
 
     BitmapFont bitmapFont;
 
+    String mapName;
+
     public BodGameScreen(Game game, String mapName, List<Combatant> players) {
         init(game, mapName, players);
     }
 
     private void init(Game game, String mapName, List<Combatant> players) {
         this.game = game;
+        this.mapName = mapName;
 
         loadFonts();
 
@@ -72,6 +75,7 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
         players.forEach(p -> {
             p.setX(charX);
             p.setY(charY);
+            p.setGameState(this);
             gameMaster.addCombatants(p);
         });
         loadNpcs();
@@ -83,8 +87,12 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
     public BodGameScreen(Game game) {
         Player p = new Player( this, "Ardelson Bitemunch");
         p.setLevel(1);
-        p.addAttack("Long sword", 60, 8, 1);
-        p.addAttack("Dagger", 40, 4, 0);
+        p.setMagicPoints(10);
+        p.addAttack("Long sword", 60, 8, 1, true, false);
+        p.addAttack("Dagger", 40, 4, 0, false, false);
+        p.addAttack( "Shield", 50, 3, 0, false, true);
+        p.addSpell("Minor Heal", 1, 40);
+        p.addSpell("Bladesharp", 1, 30);
         List<Combatant> players = new ArrayList<>();
         players.add(p);
 
@@ -92,10 +100,23 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
     }
 
     private void loadNpcs() {
-        Npc npc = new Npc(11, 20, this, 1,"Goblin Jason");
-        npc.addAttack("Short sword", 50, 6, 0);
-        npc.setAc(1);
-        gameMaster.addCombatants(npc);
+        TiledMapTileLayer layer = (TiledMapTileLayer)tiledMap.getLayers().get("Monsters");
+        int dimx = layer.getWidth();
+        int dimy = layer.getHeight();
+        for (int i = 0; i < dimx; i++) {
+            for (int j = 0; j < dimy; j++) {
+                TiledMapTileLayer.Cell cell = layer.getCell(i, j);
+                if (cell != null) {
+                    Object prop = cell.getTile().getProperties().get("monster-name");
+                    if (prop != null && prop instanceof String) {
+                        Npc npc = NpcFactory.createNpc(prop.toString(), this);
+                        npc.setX(i);
+                        npc.setY(j);
+                        gameMaster.addCombatants(npc);
+                    }
+                }
+            }
+        }
     }
 
     private void loadFonts() {
@@ -257,21 +278,34 @@ public class BodGameScreen implements Screen, InputProcessor, GameState {
     @Override
     public boolean keyDown(int keycode) {
         Combatant c = gameMaster.getActivePlayer();
-        if (keycode == Input.Keys.UP && gameMaster.canAct() && c.moveTo(c.getX(), c.getY() + 2)) {
-            handleGmAction();
-        } else if (keycode == Input.Keys.DOWN && gameMaster.canAct() && c.moveTo(c.getX(), c.getY() - 2)) {
-            handleGmAction();
-        } else if (keycode == Input.Keys.LEFT && gameMaster.canAct() && c.moveTo(c.getX() - 2, c.getY())) {
-            handleGmAction();
-        } else if (keycode == Input.Keys.RIGHT && gameMaster.canAct() && c.moveTo(c.getX() + 2, c.getY())) {
-            handleGmAction();
-        } else if (keycode == Input.Keys.P && gameMaster.canAct()) {
-            handleGmAction();
-        } else if (keycode == Input.Keys.ESCAPE) {
-            game.setScreen(new PauseGameScreen(game, this));
-        } else if (keycode == Input.Keys.E && exitAt(c.getX(), c.getY())) {
-            exitRoom();
+        if (gameMaster.isCastingSpell()) {
+            if (keycode == Input.Keys.ESCAPE || keycode == Input.Keys.S) {
+                gameMaster.cancelSpell();
+            } else if ((keycode >= Input.Keys.NUM_0) && (keycode <= Input.Keys.NUM_9)) {
+                if (gameMaster.castSpell(keycode - Input.Keys.NUM_0)) {
+                    handleGmAction();
+                }
+            }
+        } else {
+            if (keycode == Input.Keys.UP && gameMaster.canAct() && c.moveTo(c.getX(), c.getY() + 2)) {
+                handleGmAction();
+            } else if (keycode == Input.Keys.DOWN && gameMaster.canAct() && c.moveTo(c.getX(), c.getY() - 2)) {
+                handleGmAction();
+            } else if (keycode == Input.Keys.LEFT && gameMaster.canAct() && c.moveTo(c.getX() - 2, c.getY())) {
+                handleGmAction();
+            } else if (keycode == Input.Keys.RIGHT && gameMaster.canAct() && c.moveTo(c.getX() + 2, c.getY())) {
+                handleGmAction();
+            } else if (keycode == Input.Keys.P && gameMaster.canAct()) {
+                handleGmAction();
+            } else if (keycode == Input.Keys.ESCAPE) {
+                game.setScreen(new PauseGameScreen(game, this));
+            } else if (keycode == Input.Keys.E && exitAt(c.getX(), c.getY())) {
+                exitRoom();
+            } else if (keycode == Input.Keys.S && gameMaster.canAct()) {
+                gameMaster.castSpell();
+            }
         }
+
         return false;
     }
 

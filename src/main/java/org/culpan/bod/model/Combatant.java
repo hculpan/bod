@@ -25,11 +25,23 @@ public abstract class Combatant {
 
     int ac = 10;
 
+    int magicPoints;
+
     String name;
 
     Combatant target;
 
     List<Attack> attacks = new ArrayList<>();
+
+    List<Spell> spells = new ArrayList<>();
+
+    Attack activeAttack;
+
+    Attack activeParry;
+
+    public Combatant() {
+
+    }
 
     public Combatant(int x, int y, GameState gameState) {
         this.x = x;
@@ -46,6 +58,13 @@ public abstract class Combatant {
     public abstract void renderInfo(Batch batch);
 
     public abstract void act();
+
+    public void healDamage(int healed) {
+        this.hp += healed;
+        if (hp > maxHp) {
+            hp = maxHp;
+        }
+    }
 
     public int takeDamage(int damage) {
         if (ac >= damage) {
@@ -65,9 +84,9 @@ public abstract class Combatant {
         int finalDamage;
         finalDamage = target.takeDamage(damage);
         if (finalDamage == 0) {
-            return String.format("%s attacks and hits, but armor blocks all damage!", name);
+            return String.format("%s hit with %s, but armor blocked damage!", name, getActiveAttack().getWeaponName());
         } else {
-            return String.format("%s attacks and hits for %d damage!", name, finalDamage);
+            return String.format("%s hit with %s for %d damage!", name, getActiveAttack().getWeaponName(), finalDamage);
         }
     }
 
@@ -89,13 +108,13 @@ public abstract class Combatant {
                 message = doDamage(target, damage);
                 break;
             case miss:
-                message = String.format("%s attacks and misses!", name);
+                message = String.format("%s attacked with %s and misses!", name, getActiveAttack().getWeaponName());
                 break;
             case parried:
-                message = String.format("%s attacks and hits but is parried!", name);
+                message = String.format("%s hits with %s but is parried by %s!", name, getActiveAttack().getWeaponName(), target.getActiveParry().getWeaponName());
                 break;
             case critical_fumble:
-                message = String.format("%s attacks and fumbles!", name);
+                message = String.format("%s attacks with %s and fumbles!", name, getActiveAttack().getWeaponName());
                 break;
         }
 
@@ -184,7 +203,19 @@ public abstract class Combatant {
     }
 
     public void addAttack(String name, int skill, int damageDie, int damageBonus) {
-        attacks.add(new Attack(name, skill, damageDie, damageBonus));
+        addAttack(name, skill, damageDie, damageBonus, true, true);
+    }
+
+    public void addAttack(String name, int skill, int damageDie, int damageBonus, boolean activeAttack, boolean activeParry) {
+        Attack attack = new Attack(name, skill, damageDie, damageBonus);
+        attacks.add(attack);
+        if (activeAttack) {
+            this.activeAttack = attack;
+        }
+
+        if (activeParry) {
+            this.activeParry = attack;
+        }
     }
 
     public void addAttack(String name, int damageDie) {
@@ -192,11 +223,19 @@ public abstract class Combatant {
     }
 
     public Attack getActiveAttack() {
-        return attacks.get(0);
+        if (activeAttack == null) {
+            return attacks.get(0);
+        } else {
+            return activeAttack;
+        }
     }
 
     public Attack getActiveParry() {
-        return attacks.get(0);
+        if (activeParry == null) {
+            return attacks.get(0);
+        } else {
+            return activeParry;
+        }
     }
 
     public int getLevel() {
@@ -213,5 +252,46 @@ public abstract class Combatant {
 
     public void setMaxHp(int maxHp) {
         this.maxHp = maxHp;
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
+
+    public int getMagicPoints() {
+        return magicPoints;
+    }
+
+    public void setMagicPoints(int magicPoints) {
+        this.magicPoints = magicPoints;
+    }
+
+    public List<Spell> getSpells() {
+        return spells;
+    }
+
+    public void addSpell(String name, int mpCost, int skillLevel) {
+        Spell spell = new Spell(name, mpCost, skillLevel);
+        spells.add(spell);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Combatant getTarget() {
+        return target;
+    }
+
+    public void setTarget(Combatant target) {
+        this.target = target;
     }
 }
